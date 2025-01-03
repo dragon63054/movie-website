@@ -1,23 +1,36 @@
-import React, { useEffect, useState } from "react";
 import { useLoaderData, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 
 export async function loader() {
     const apiUrl = 'http://www.omdbapi.com/?s=movie&apikey=1e3a2392';
     const response = await fetch(apiUrl);
     if (!response.ok) {
-        console.error(`Error: ${response.status}`); 
-        return null; 
+        console.error(`Error: ${response.status}`);
+        return null;
     }
-    const data = await response.json(); // Fetch the data
-    console.log("Fetched Movies:", data); // Log the fetched data to the console
-    return data; 
+    const data = await response.json();
+    console.log("Fetched Movies:", data);
+    return data;
+}
+
+interface Movie {
+    imdbID: string;
+    Title: string;
+    Year: string;
+    Poster: string;
+    Runtime: string;
+    Plot: string;
+}
+
+interface LoaderData {
+    Search: Movie[];
 }
 
 export default function Dashboard() {
-    const data = useLoaderData(); 
+    const data = useLoaderData() as LoaderData;
     const navigate = useNavigate();
 
-    const [movies, setMovies] = useState([]);
+    const [movies, setMovies] = useState<Movie[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [moviesPerPage] = useState(5);
@@ -32,22 +45,25 @@ export default function Dashboard() {
             return;
         }
         const fetchMovieDetails = async () => {
-            if (data && data.Search) {
-                const moviesWithDetails = await Promise.all(
-                    data.Search.map(async (movie) => {
-                        const response = await fetch(`http://www.omdbapi.com/?i=${movie.imdbID}&apikey=1e3a2392`);
-                        const detailedData = await response.json();
-                        return detailedData;
-                    })
-                );
-                setMovies(moviesWithDetails);
+            try {
+                if (data && data.Search) {
+                    const moviesWithDetails = await Promise.all(
+                        data.Search.map(async (movie: any) => {
+                            const response = await fetch(`http://www.omdbapi.com/?i=${movie.imdbID}&apikey=1e3a2392`);
+                            const detailedData = await response.json();
+                            return detailedData;
+                        })
+                    );
+                    setMovies(moviesWithDetails);
+                }
+            } catch (error) {
+                console.error("Error fetching movie details:", error);
             }
         };
-        
         fetchMovieDetails();
     }, [data]);
 
-    const fetchMovies = async (searchTerm, page) => {
+    const fetchMovies = async (searchTerm: string, page: number) => {
         setLoading(true);
         setError("");
         try {
@@ -60,14 +76,14 @@ export default function Dashboard() {
                 setMovies(data.Search || []);
             }
             setCurrentPage(page);
-        } catch (err) {
+        } catch (error) {
             setError("Network error: Unable to fetch data.");
         } finally {
             setLoading(false);
         }
     };
 
-    const handleSearch = async (e) => {
+    const handleSearch = async (e: any) => {
         e.preventDefault();
         if (searchTerm) {
             await fetchMovies(searchTerm, 1);
@@ -77,7 +93,7 @@ export default function Dashboard() {
         }
     };
 
-    const handleFeedbackSubmit = (e) => {
+    const handleFeedbackSubmit = (e: any) => {
         e.preventDefault();
         console.log("Feedback submitted:", feedback);
         setFeedback("");
@@ -89,7 +105,7 @@ export default function Dashboard() {
     const currentMovies = movies.slice(indexOfFirstMovie, indexOfLastMovie);
     const totalPages = Math.ceil(movies.length / moviesPerPage);
 
-    const handlePageChange = async (pageNumber) => {
+    const handlePageChange = async (pageNumber: number) => {
         if (pageNumber < 1 || pageNumber > totalPages) return;
         if (searchTerm) {
             await fetchMovies(searchTerm, pageNumber);
@@ -131,7 +147,6 @@ export default function Dashboard() {
                             onChange={(e) => setFeedback(e.target.value)} 
                             placeholder="Your feedback..." 
                             className="w-full p-2 border border-gray-300 rounded-md resize-none"
-                            rows="4"
                         />
                         <button type="submit" className="bg-green-500 text-white p-2 rounded-md mt-2 hover:bg-green-600 transition duration-200">
                             Submit Feedback
@@ -152,7 +167,6 @@ export default function Dashboard() {
                                         src={movie.Poster} 
                                         alt={movie.Title} 
                                         className="w-full h-60 mb-2 object-contain" 
-                                        onError={(e) => { e.target.onerror = null; e.target.src="fallback_image_url"; }} 
                                     />
                                     <div className ="p-2">
                                         <h2 className="text-md font-semibold">{movie.Title}</h2>

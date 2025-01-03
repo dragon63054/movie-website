@@ -5,6 +5,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Dashboard, { loader } from "./pages/dashboard.tsx";
 import MovieDetails from "./pages/viewpage.tsx";
 
+
 const router = createBrowserRouter([
   {
     path: "/",
