@@ -23,16 +23,28 @@ export default function MovieDetail() {
     const { id } = useParams(); // Get the movie ID from the URL
     const [movie, setMovie] = useState<Movie | null>(null);
     const [reviews, setReviews] = useState<Review[]>([]); // State for reviews
+    const [loading, setLoading] = useState(true); // Loading state
+    const [error, setError] = useState<string | null>(null); // Error state
 
     useEffect(() => {
         const fetchMovieDetails = async () => {
             try {
                 // Ensure the URL uses HTTPS
                 const response = await fetch(`https://www.omdbapi.com/?i=${id}&apikey=1e3a2392`);
+                if (!response.ok) {
+                    throw new Error("Failed to fetch movie details");
+                }
                 const data = await response.json();
+                if (data.Response === "False") {
+                    throw new Error(data.Error || "Movie not found");
+                }
                 setMovie(data);
+                setError(null);
             } catch (err) {
                 console.error("Error fetching movie details:", err);
+                setError(err instanceof Error ? err.message : "An unknown error occurred");
+            } finally {
+                setLoading(false);
             }
         };
 
@@ -49,14 +61,27 @@ export default function MovieDetail() {
         setReviews(staticReviews);
     }, []);
 
-    if (!movie) {
+    if (loading) {
         return <p className="text-center text-gray-500">Loading...</p>;
     }
 
+    if (error) {
+        return <p className="text-center text -red-500">{error}</p>;
+    }
+
+    if (!movie) {
+        return <p className="text-center text-gray-500">No movie data available.</p>;
+    }
+
+    // Ensure the poster URL uses HTTPS
+    const posterUrl = movie.Poster.startsWith("http://") 
+        ? movie.Poster.replace("http://", "https://") 
+        : movie.Poster;
+
     return (
-        <div className="bg-black grid grid-cols-1 sm:grid-cols-[1fr_auto] text-white p-4 rounded-lg  font-display gap-5">
-            <h1 className=" text-4xl md:text-5xl font-bold mb-4 text-center">{movie.Title}</h1>
-            <img src={movie.Poster} alt={movie.Title} className="w-full rounded-md shadow-md object-contain mx-auto p-2" />
+        <div className="bg-black grid grid-cols-1 sm:grid-cols-[1fr_auto] text-white p-4 rounded-lg font-display gap-5">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-center">{movie.Title}</h1>
+            <img src={posterUrl} alt={movie.Title} className="w-full rounded-md shadow-md object-contain mx-auto p-2" />
             <p className="text-lg md:text-xl mb-4">{movie.Plot}</p>
             <p className="mb-2">
                 <span className="font-semibold">Year:</span> <span>{movie.Year}</span>
