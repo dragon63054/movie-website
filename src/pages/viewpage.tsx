@@ -27,11 +27,12 @@ export default function MovieDetail() {
     useEffect(() => {
         const fetchMovieDetails = async () => {
             try {
+                // Ensure the URL uses HTTPS
                 const response = await fetch(`https://www.omdbapi.com/?i=${id}&apikey=1e3a2392`);
                 const data = await response.json();
                 setMovie(data);
             } catch (err) {
-                console.error(err);
+                console.error("Error fetching movie details:", err);
             }
         };
 
