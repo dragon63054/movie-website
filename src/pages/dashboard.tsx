@@ -2,7 +2,7 @@ import { useLoaderData, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 
 export async function loader() {
-    const apiUrl = 'http://www.omdbapi.com/?s=movie&apikey=1e3a2392';
+    const apiUrl = 'https://www.omdbapi.com/?s=movie&apikey=1e3a2392';
     const response = await fetch(apiUrl);
     if (!response.ok) {
         console.error(`Error: ${response.status}`);
